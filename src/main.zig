@@ -41,22 +41,22 @@ const Hexagon = struct {
     vbo: zgl.VertexBuffer,
     ibo: zgl.ElementBuffer,
 
-    pub fn create(allocator: std.mem.Allocator) !Hexagon {
+    pub fn init(allocator: std.mem.Allocator) !Hexagon {
         const vertex_shader_source = try readFile(allocator, "shaders/hexagon.vert");
         const fragment_shader_source = try readFile(allocator, "shaders/hexagon.frag");
         defer allocator.free(vertex_shader_source);
         defer allocator.free(fragment_shader_source);
 
-        var vertex_shader = try zgl.Shader.create(zgl.Shader.Kind.Vertex, vertex_shader_source);
-        defer vertex_shader.destroy();
+        var vertex_shader = try zgl.Shader.init(zgl.Shader.Kind.Vertex, vertex_shader_source);
+        defer vertex_shader.deinit();
 
-        var fragment_shader = try zgl.Shader.create(zgl.Shader.Kind.Fragment, fragment_shader_source);
-        defer fragment_shader.destroy();
+        var fragment_shader = try zgl.Shader.init(zgl.Shader.Kind.Fragment, fragment_shader_source);
+        defer fragment_shader.deinit();
 
-        const program = try zgl.Program.create(&vertex_shader, &fragment_shader);
-        var vao = try zgl.VertexArray.create();
-        var vbo = try zgl.VertexBuffer.create();
-        var ibo = try zgl.ElementBuffer.create();
+        const program = try zgl.Program.init(&[_]*const zgl.Shader{ &vertex_shader, &fragment_shader });
+        var vao = try zgl.VertexArray.init();
+        var vbo = try zgl.VertexBuffer.init();
+        var ibo = try zgl.ElementBuffer.init();
 
         {
             // Make our VAO the current global VAO, but unbind it when we're done so we don't end up
@@ -122,11 +122,11 @@ const Hexagon = struct {
         };
     }
 
-    pub fn destroy(self: *Hexagon) void {
-        self.program.destroy();
-        self.vao.destroy();
-        self.vbo.destroy();
-        self.ibo.destroy();
+    pub fn deinit(self: *Hexagon) void {
+        self.program.deinit();
+        self.vao.deinit();
+        self.vbo.deinit();
+        self.ibo.deinit();
     }
 
     pub fn render(self: *const Hexagon, window: *glfw.Window, timer: *std.time.Timer) void {
@@ -171,7 +171,7 @@ const State = struct {
         glfw_log.err("{}: {s}\n", .{ error_code, description });
     }
 
-    pub fn create() !State {
+    pub fn init() !State {
         glfw.setErrorCallback(glfwErrorCallback);
 
         if (!glfw.init(.{})) {
@@ -185,16 +185,16 @@ const State = struct {
             .opengl_profile = .opengl_core_profile,
             .opengl_forward_compat = true,
         }) orelse {
-            glfw_log.err("failed to create GLFW window: {?s}", .{glfw.getErrorString()});
-            return error.CreateWindowFailed;
+            glfw_log.err("failed to init GLFW window: {?s}", .{glfw.getErrorString()});
+            return error.initWindowFailed;
         };
+        errdefer window.destroy();
 
         glfw.makeContextCurrent(window);
         glfw.swapInterval(1);
 
         if (!gl_procs.init(glfw.getProcAddress)) {
             gl_log.err("failed to load OpenGL functions", .{});
-            window.destroy();
             return error.GLInitFailed;
         }
         gl.makeProcTableCurrent(&gl_procs);
@@ -202,7 +202,7 @@ const State = struct {
         return State{ .window = window };
     }
 
-    pub fn destroy(self: *State) void {
+    pub fn deinit(self: *State) void {
         glfw.makeContextCurrent(null);
         self.window.destroy();
         gl.makeProcTableCurrent(null);
@@ -210,8 +210,8 @@ const State = struct {
     }
 
     pub fn run(self: *State) !void {
-        var hexagon = try Hexagon.create(std.heap.page_allocator);
-        defer hexagon.destroy();
+        var hexagon = try Hexagon.init(std.heap.page_allocator);
+        defer hexagon.deinit();
 
         var timer = try std.time.Timer.start();
 
@@ -230,7 +230,7 @@ const State = struct {
 };
 
 pub fn main() !void {
-    var state = try State.create();
-    defer state.destroy();
+    var state = try State.init();
+    defer state.deinit();
     try state.run();
 }

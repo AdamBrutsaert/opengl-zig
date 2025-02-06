@@ -11,7 +11,7 @@ pub const Shader = struct {
         Fragment = gl.FRAGMENT_SHADER,
     };
 
-    pub fn create(kind: Kind, source: [:0]const u8) !Shader {
+    pub fn init(kind: Kind, source: [:0]const u8) !Shader {
         const id = gl.CreateShader(@intFromEnum(kind));
         if (id == 0) return error.CreateShaderFailed;
 
@@ -31,7 +31,7 @@ pub const Shader = struct {
         return Shader{ .id = id };
     }
 
-    pub fn destroy(self: *Shader) void {
+    pub fn deinit(self: *Shader) void {
         gl.DeleteShader(self.id);
     }
 };
@@ -39,12 +39,13 @@ pub const Shader = struct {
 pub const Program = struct {
     id: c_uint,
 
-    pub fn create(vertex: *const Shader, fragment: *const Shader) !Program {
+    pub fn init(shaders: []const *const Shader) !Program {
         const id = gl.CreateProgram();
         if (id == 0) return error.CreateProgramFailed;
 
-        gl.AttachShader(id, vertex.id);
-        gl.AttachShader(id, fragment.id);
+        for (shaders) |shader| {
+            gl.AttachShader(id, shader.id);
+        }
         gl.LinkProgram(id);
 
         var success: c_int = undefined;
@@ -60,7 +61,7 @@ pub const Program = struct {
         return Program{ .id = id };
     }
 
-    pub fn destroy(self: *Program) void {
+    pub fn deinit(self: *Program) void {
         gl.DeleteProgram(self.id);
     }
 
@@ -76,7 +77,7 @@ pub const Program = struct {
 pub const VertexArray = struct {
     id: c_uint,
 
-    pub fn create() !VertexArray {
+    pub fn init() !VertexArray {
         var id: c_uint = undefined;
         gl.GenVertexArrays(1, (&id)[0..1]);
         if (id == 0) return error.CreateVertexArrayFailed;
@@ -84,7 +85,7 @@ pub const VertexArray = struct {
         return VertexArray{ .id = id };
     }
 
-    pub fn destroy(self: *VertexArray) void {
+    pub fn deinit(self: *VertexArray) void {
         gl.DeleteVertexArrays(1, (&self.id)[0..1]);
     }
 
@@ -100,7 +101,7 @@ pub const VertexArray = struct {
 pub const VertexBuffer = struct {
     id: c_uint,
 
-    pub fn create() !VertexBuffer {
+    pub fn init() !VertexBuffer {
         var id: c_uint = undefined;
         gl.GenBuffers(1, (&id)[0..1]);
         if (id == 0) return error.CreateVertexBufferFailed;
@@ -108,7 +109,7 @@ pub const VertexBuffer = struct {
         return VertexBuffer{ .id = id };
     }
 
-    pub fn destroy(self: *VertexBuffer) void {
+    pub fn deinit(self: *VertexBuffer) void {
         gl.DeleteBuffers(1, (&self.id)[0..1]);
     }
 
@@ -124,7 +125,7 @@ pub const VertexBuffer = struct {
 pub const ElementBuffer = struct {
     id: c_uint,
 
-    pub fn create() !ElementBuffer {
+    pub fn init() !ElementBuffer {
         var id: c_uint = undefined;
         gl.GenBuffers(1, (&id)[0..1]);
         if (id == 0) return error.CreateIndexBufferFailed;
@@ -132,7 +133,7 @@ pub const ElementBuffer = struct {
         return ElementBuffer{ .id = id };
     }
 
-    pub fn destroy(self: *ElementBuffer) void {
+    pub fn deinit(self: *ElementBuffer) void {
         gl.DeleteBuffers(1, (&self.id)[0..1]);
     }
 
