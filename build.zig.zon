@@ -10,6 +10,10 @@
             .url = "git+https://github.com/castholm/zigglgen#1c901bef6d312ef1814b8fce3c5a9e9e8e61ac2d",
             .hash = "12209d8a018832bee15d9da29a12fa753d89b56cd843cdf1f39501546c6467e38ba1",
         },
+        .zigimg = .{
+            .url = "git+https://github.com/zigimg/zigimg.git#b1291f89d5053c6141951ca944b1a70c6a17fc92",
+            .hash = "1220e47c132d0a1c95fa6c538a3f4f4064cf3ace6c7bd38979718d8ed16a5fb8ee29",
+        },
     },
     .paths = .{
         "build.zig",

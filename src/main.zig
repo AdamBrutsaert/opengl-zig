@@ -153,6 +153,165 @@ const Hexagon = struct {
     }
 };
 
+const Container = struct {
+    const Vertex = extern struct {
+        const Position = [3]f32;
+        const Color = [3]f32;
+        const Tex = [2]f32;
+
+        position: Position,
+        color: Color,
+        tex: Tex,
+    };
+
+    const vertices = [_]Vertex{
+        .{ .position = .{ 0.5, 0.5, 0.0 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.0 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.0 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.0 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+    };
+
+    const indices = [_]u8{ 0, 1, 3, 1, 2, 3 };
+
+    program: zgl.Program,
+    texture: zgl.Texture2D,
+    texture2: zgl.Texture2D,
+    vao: zgl.VertexArray,
+    vbo: zgl.VertexBuffer,
+    ibo: zgl.ElementBuffer,
+
+    pub fn init(allocator: std.mem.Allocator) !Container {
+        const vertex_shader_source = try readFile(allocator, "shaders/container.vert");
+        const fragment_shader_source = try readFile(allocator, "shaders/container.frag");
+        defer allocator.free(vertex_shader_source);
+        defer allocator.free(fragment_shader_source);
+
+        var vertex_shader = try zgl.Shader.init(zgl.Shader.Kind.Vertex, vertex_shader_source);
+        defer vertex_shader.deinit();
+
+        var fragment_shader = try zgl.Shader.init(zgl.Shader.Kind.Fragment, fragment_shader_source);
+        defer fragment_shader.deinit();
+
+        var program = try zgl.Program.init(&[_]*const zgl.Shader{ &vertex_shader, &fragment_shader });
+        errdefer program.deinit();
+
+        var texture = try zgl.Texture2D.initRGB(allocator, "assets/container.png");
+        errdefer texture.deinit();
+
+        var texture2 = try zgl.Texture2D.initRGBA(allocator, "assets/awesomeface.png");
+        errdefer texture2.deinit();
+
+        var vao = try zgl.VertexArray.init();
+        errdefer vao.deinit();
+
+        var vbo = try zgl.VertexBuffer.init();
+        errdefer vbo.deinit();
+
+        var ibo = try zgl.ElementBuffer.init();
+        errdefer ibo.deinit();
+
+        {
+            zgl.VertexArray.bind(&vao);
+            defer zgl.VertexArray.unbind();
+
+            {
+                zgl.VertexBuffer.bind(&vbo);
+                defer zgl.VertexBuffer.unbind();
+
+                gl.BufferData(
+                    gl.ARRAY_BUFFER,
+                    @sizeOf(@TypeOf(Container.vertices)),
+                    &Container.vertices,
+                    gl.STATIC_DRAW,
+                );
+
+                const position_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Pos"));
+                gl.EnableVertexAttribArray(position_attrib);
+                gl.VertexAttribPointer(
+                    position_attrib,
+                    @typeInfo(Container.Vertex.Position).array.len,
+                    gl.FLOAT,
+                    gl.FALSE,
+                    @sizeOf(Container.Vertex),
+                    @offsetOf(Container.Vertex, "position"),
+                );
+
+                const color_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Color"));
+                gl.EnableVertexAttribArray(color_attrib);
+                gl.VertexAttribPointer(
+                    color_attrib,
+                    @typeInfo(Container.Vertex.Color).array.len,
+                    gl.FLOAT,
+                    gl.FALSE,
+                    @sizeOf(Container.Vertex),
+                    @offsetOf(Container.Vertex, "color"),
+                );
+
+                const tex_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Tex"));
+                gl.EnableVertexAttribArray(tex_attrib);
+                gl.VertexAttribPointer(
+                    tex_attrib,
+                    @typeInfo(Container.Vertex.Tex).array.len,
+                    gl.FLOAT,
+                    gl.FALSE,
+                    @sizeOf(Container.Vertex),
+                    @offsetOf(Container.Vertex, "tex"),
+                );
+            }
+
+            zgl.ElementBuffer.bind(&ibo);
+            gl.BufferData(
+                gl.ELEMENT_ARRAY_BUFFER,
+                @sizeOf(@TypeOf(Container.indices)),
+                &Container.indices,
+                gl.STATIC_DRAW,
+            );
+        }
+
+        zgl.ElementBuffer.unbind();
+
+        return Container{
+            .program = program,
+            .texture = texture,
+            .texture2 = texture2,
+            .vao = vao,
+            .vbo = vbo,
+            .ibo = ibo,
+        };
+    }
+
+    pub fn deinit(self: *Container) void {
+        self.program.deinit();
+        self.texture.deinit();
+        self.vao.deinit();
+        self.vbo.deinit();
+        self.ibo.deinit();
+    }
+
+    pub fn render(self: *const Container, timer: *std.time.Timer) void {
+        zgl.Program.bind(&self.program);
+        defer zgl.Program.unbind();
+
+        zgl.VertexArray.bind(&self.vao);
+        defer zgl.VertexArray.unbind();
+
+        zgl.Texture2D.bind(&self.texture, 0);
+        defer zgl.Texture2D.unbind(0);
+
+        zgl.Texture2D.bind(&self.texture2, 1);
+        defer zgl.Texture2D.unbind(1);
+
+        gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture1"), 0);
+        gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture2"), 1);
+
+        const seconds = @as(f32, @floatFromInt(timer.read())) / std.time.ns_per_s;
+        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix1"), std.math.cos(seconds));
+        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix2"), std.math.sin(0.1 * seconds));
+
+        gl.DrawElements(gl.TRIANGLES, Container.indices.len, gl.UNSIGNED_BYTE, 0);
+    }
+};
+
 fn readFile(allocator: std.mem.Allocator, path: []const u8) ![:0]u8 {
     var file = try std.fs.cwd().openFile(path, .{ .mode = .read_only });
     defer file.close();
@@ -210,19 +369,28 @@ const State = struct {
     }
 
     pub fn run(self: *State) !void {
-        var hexagon = try Hexagon.init(std.heap.page_allocator);
-        defer hexagon.deinit();
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        defer _ = gpa.deinit();
 
+        // var hexagon = try Hexagon.init(gpa.allocator());
+        // defer hexagon.deinit();
         var timer = try std.time.Timer.start();
 
+        var container = try Container.init(gpa.allocator());
+        defer container.deinit();
+
         gl.ClearColor(0.1, 0.1, 0.1, 1);
-        gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE);
+        // gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
         while (!self.window.shouldClose()) {
             glfw.pollEvents();
 
+            const framebuffer_size = self.window.getFramebufferSize();
+            gl.Viewport(0, 0, @intCast(framebuffer_size.width), @intCast(framebuffer_size.height));
+
             gl.Clear(gl.COLOR_BUFFER_BIT);
-            hexagon.render(&self.window, &timer);
+            // hexagon.render(&self.window, &timer);
+            container.render(&timer);
 
             self.window.swapBuffers();
         }

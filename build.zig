@@ -18,8 +18,14 @@ pub fn build(b: *std.Build) void {
 
     const gl_bindings = @import("zigglgen").generateBindingsModule(b, .{ .api = .gl, .version = .@"4.6", .profile = .core, .extensions = &.{} });
 
+    const zigimg_dep = b.dependency("zigimg", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     exe.root_module.addImport("mach-glfw", glfw_dep.module("mach-glfw"));
     exe.root_module.addImport("gl", gl_bindings);
+    exe.root_module.addImport("zigimg", zigimg_dep.module("zigimg"));
 
     b.installArtifact(exe);
 

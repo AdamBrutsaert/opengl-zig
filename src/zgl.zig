@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("gl");
+const img = @import("zigimg");
 
 const gl_log = std.log.scoped(.gl);
 
@@ -143,5 +144,75 @@ pub const ElementBuffer = struct {
 
     pub fn unbind() void {
         gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0);
+    }
+};
+
+pub const Texture2D = struct {
+    id: c_uint,
+
+    pub fn initRGB(allocator: std.mem.Allocator, path: []const u8) !Texture2D {
+        var id: c_uint = undefined;
+        gl.GenTextures(1, (&id)[0..1]);
+        if (id == 0) return error.CreateTextureFailed;
+        errdefer gl.DeleteTextures(1, (&id)[0..1]);
+
+        var image = try img.Image.fromFilePath(allocator, path);
+        defer image.deinit();
+
+        gl.BindTexture(gl.TEXTURE_2D, id);
+        defer gl.BindTexture(gl.TEXTURE_2D, 0);
+
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        const width: c_int = @intCast(image.width);
+        const height: c_int = @intCast(image.height);
+
+        gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, image.rawBytes().ptr);
+        gl.GenerateMipmap(gl.TEXTURE_2D);
+
+        return Texture2D{ .id = id };
+    }
+
+    pub fn initRGBA(allocator: std.mem.Allocator, path: []const u8) !Texture2D {
+        var id: c_uint = undefined;
+        gl.GenTextures(1, (&id)[0..1]);
+        if (id == 0) return error.CreateTextureFailed;
+        errdefer gl.DeleteTextures(1, (&id)[0..1]);
+
+        var image = try img.Image.fromFilePath(allocator, path);
+        defer image.deinit();
+
+        gl.BindTexture(gl.TEXTURE_2D, id);
+        defer gl.BindTexture(gl.TEXTURE_2D, 0);
+
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        const width: c_int = @intCast(image.width);
+        const height: c_int = @intCast(image.height);
+
+        gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.rawBytes().ptr);
+        gl.GenerateMipmap(gl.TEXTURE_2D);
+
+        return Texture2D{ .id = id };
+    }
+
+    pub fn deinit(self: *Texture2D) void {
+        gl.DeleteTextures(1, (&self.id)[0..1]);
+    }
+
+    pub fn bind(self: *const Texture2D, slot: c_uint) void {
+        gl.ActiveTexture(gl.TEXTURE0 + slot);
+        gl.BindTexture(gl.TEXTURE_2D, self.id);
+    }
+
+    pub fn unbind(slot: c_uint) void {
+        gl.ActiveTexture(gl.TEXTURE0 + slot);
+        gl.BindTexture(gl.TEXTURE_2D, 0);
     }
 };
