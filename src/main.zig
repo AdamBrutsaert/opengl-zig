@@ -166,20 +166,54 @@ const Container = struct {
     };
 
     const vertices = [_]Vertex{
-        .{ .position = .{ 0.5, 0.5, 0.0 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, 0.0 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ -0.5, -0.5, 0.0 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ -0.5, 0.5, 0.0 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
-    };
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 0.0 } },
 
-    const indices = [_]u8{ 0, 1, 3, 1, 2, 3 };
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .color = .{ 1.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .color = .{ 0.0, 1.0, 1.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .color = .{ 0.5, 0.0, 0.5 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .color = .{ 1.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .color = .{ 0.5, 0.0, 0.5 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .color = .{ 1.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .color = .{ 0.5, 0.0, 0.5 }, .tex = .{ 1.0, 0.0 } },
+
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .color = .{ 0.0, 1.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 0.0 } },
+
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .color = .{ 0.0, 1.0, 0.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .color = .{ 0.0, 1.0, 1.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .color = .{ 0.0, 1.0, 1.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .color = .{ 1.0, 0.0, 1.0 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .color = .{ 1.0, 0.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .color = .{ 0.0, 0.0, 1.0 }, .tex = .{ 1.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .color = .{ 1.0, 0.5, 0.0 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .color = .{ 0.5, 0.0, 0.5 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .color = .{ 1.0, 1.0, 0.0 }, .tex = .{ 0.0, 1.0 } },
+    };
 
     program: zgl.Program,
     texture: zgl.Texture2D,
     texture2: zgl.Texture2D,
     vao: zgl.VertexArray,
     vbo: zgl.VertexBuffer,
-    ibo: zgl.ElementBuffer,
 
     pub fn init(allocator: std.mem.Allocator) !Container {
         const vertex_shader_source = try readFile(allocator, "shaders/container.vert");
@@ -207,9 +241,6 @@ const Container = struct {
 
         var vbo = try zgl.VertexBuffer.init();
         errdefer vbo.deinit();
-
-        var ibo = try zgl.ElementBuffer.init();
-        errdefer ibo.deinit();
 
         {
             zgl.VertexArray.bind(&vao);
@@ -259,17 +290,7 @@ const Container = struct {
                     @offsetOf(Container.Vertex, "tex"),
                 );
             }
-
-            zgl.ElementBuffer.bind(&ibo);
-            gl.BufferData(
-                gl.ELEMENT_ARRAY_BUFFER,
-                @sizeOf(@TypeOf(Container.indices)),
-                &Container.indices,
-                gl.STATIC_DRAW,
-            );
         }
-
-        zgl.ElementBuffer.unbind();
 
         return Container{
             .program = program,
@@ -277,7 +298,6 @@ const Container = struct {
             .texture2 = texture2,
             .vao = vao,
             .vbo = vbo,
-            .ibo = ibo,
         };
     }
 
@@ -286,10 +306,9 @@ const Container = struct {
         self.texture.deinit();
         self.vao.deinit();
         self.vbo.deinit();
-        self.ibo.deinit();
     }
 
-    pub fn render(self: *const Container, timer: *std.time.Timer) void {
+    pub fn render(self: *const Container, window: *glfw.Window, timer: *std.time.Timer, position: za.Vec3) void {
         zgl.Program.bind(&self.program);
         defer zgl.Program.unbind();
 
@@ -309,12 +328,17 @@ const Container = struct {
         gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix1"), std.math.cos(seconds));
         gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix2"), std.math.sin(0.1 * seconds));
 
-        const transform = za.Mat4.identity()
-            .translate(za.Vec3.new(std.math.cos(seconds), std.math.sin(0.9 * seconds), 0.0).scale(0.7))
-            .rotate(seconds * 360, za.Vec3.new(0.0, 0.0, 1.0));
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Transform"), 1, gl.FALSE, transform.getData());
+        const framebuffer_size = window.getFramebufferSize();
 
-        gl.DrawElements(gl.TRIANGLES, Container.indices.len, gl.UNSIGNED_BYTE, 0);
+        const model = za.Mat4.fromTranslate(position).rotate(seconds * 50.0, za.Vec3.new(0.5, 1.0, 0.0));
+        const view = za.Mat4.fromTranslate(za.Vec3.new(0.0, 0.0, -3.0));
+        const projection = za.Mat4.perspective(45.0, @as(f32, @floatFromInt(framebuffer_size.width)) / @as(f32, @floatFromInt(framebuffer_size.height)), 0.1, 100.0);
+
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_View"), 1, gl.FALSE, view.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
+
+        gl.DrawArrays(gl.TRIANGLES, 0, Container.vertices.len);
     }
 };
 
@@ -386,7 +410,21 @@ const State = struct {
         defer container.deinit();
 
         gl.ClearColor(0.1, 0.1, 0.1, 1);
+        gl.Enable(gl.DEPTH_TEST);
         // gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE);
+
+        const positions = [_]za.Vec3{
+            za.Vec3.new(0.0, 0.0, 0.0),
+            za.Vec3.new(2.0, 5.0, -15.0),
+            za.Vec3.new(-1.5, -2.2, -2.5),
+            za.Vec3.new(-3.8, -2.0, -12.3),
+            za.Vec3.new(2.4, -0.4, -3.5),
+            za.Vec3.new(-1.7, 3.0, -7.5),
+            za.Vec3.new(1.3, -2.0, -2.5),
+            za.Vec3.new(1.5, 2.0, -2.5),
+            za.Vec3.new(1.5, 0.2, -1.5),
+            za.Vec3.new(-1.3, 1.0, -1.5),
+        };
 
         while (!self.window.shouldClose()) {
             glfw.pollEvents();
@@ -394,9 +432,12 @@ const State = struct {
             const framebuffer_size = self.window.getFramebufferSize();
             gl.Viewport(0, 0, @intCast(framebuffer_size.width), @intCast(framebuffer_size.height));
 
-            gl.Clear(gl.COLOR_BUFFER_BIT);
+            gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             // hexagon.render(&self.window, &timer);
-            container.render(&timer);
+
+            for (positions) |position| {
+                container.render(&self.window, &timer, position);
+            }
 
             self.window.swapBuffers();
         }
