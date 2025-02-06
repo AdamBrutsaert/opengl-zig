@@ -11,8 +11,12 @@
             .hash = "12209d8a018832bee15d9da29a12fa753d89b56cd843cdf1f39501546c6467e38ba1",
         },
         .zigimg = .{
-            .url = "git+https://github.com/zigimg/zigimg.git#b1291f89d5053c6141951ca944b1a70c6a17fc92",
-            .hash = "1220e47c132d0a1c95fa6c538a3f4f4064cf3ace6c7bd38979718d8ed16a5fb8ee29",
+            .url = "git+https://github.com/AdamBrutsaert/zigimg#0b2a80611bb19a1adcedae24de29b626d7a8c983",
+            .hash = "1220c015b29cc7d175cf20a23491251e65dbe58863d014755662d2f7c32c58a846b9",
+        },
+        .zalgebra = .{
+            .url = "git+https://github.com/AdamBrutsaert/zalgebra#7432845ddad16531023f6c519fb5f897f6972540",
+            .hash = "122042ed035f1936fc6ddc91896a18f25a173621b804e6730f65aad5645b850823d8",
         },
     },
     .paths = .{

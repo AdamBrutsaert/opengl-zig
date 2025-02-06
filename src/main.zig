@@ -2,6 +2,7 @@ const std = @import("std");
 const glfw = @import("mach-glfw");
 const gl = @import("gl");
 const zgl = @import("zgl.zig");
+const za = @import("zalgebra");
 
 const glfw_log = std.log.scoped(.glfw);
 const gl_log = std.log.scoped(.gl);
@@ -307,6 +308,11 @@ const Container = struct {
         const seconds = @as(f32, @floatFromInt(timer.read())) / std.time.ns_per_s;
         gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix1"), std.math.cos(seconds));
         gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix2"), std.math.sin(0.1 * seconds));
+
+        const transform = za.Mat4.identity()
+            .translate(za.Vec3.new(std.math.cos(seconds), std.math.sin(0.9 * seconds), 0.0).scale(0.7))
+            .rotate(seconds * 360, za.Vec3.new(0.0, 0.0, 1.0));
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Transform"), 1, gl.FALSE, transform.getData());
 
         gl.DrawElements(gl.TRIANGLES, Container.indices.len, gl.UNSIGNED_BYTE, 0);
     }
