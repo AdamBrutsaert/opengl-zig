@@ -10,17 +10,6 @@ const gl_log = std.log.scoped(.gl);
 /// Procedure table that will hold loaded OpenGL functions.
 var gl_procs: gl.ProcTable = undefined;
 
-var camPos = za.Vec3.new(0.0, 0.0, 3.0);
-var camFront = za.Vec3.new(0.0, 0.0, -1.0);
-const camUp = za.Vec3.new(0.0, 1.0, 0.0);
-
-var first_mouse = true;
-var last_x: f64 = undefined;
-var last_y: f64 = undefined;
-
-var yaw: f32 = -90.0;
-var pitch: f32 = 0.0;
-
 const Hexagon = struct {
     const Vertex = extern struct {
         const Position = [2]f32;
@@ -319,7 +308,7 @@ const Container = struct {
         self.vbo.deinit();
     }
 
-    pub fn render(self: *const Container, window: *glfw.Window, timer: *std.time.Timer, position: za.Vec3) void {
+    pub fn render(self: *const Container, camera: Camera, window: *glfw.Window, time: f32, position: za.Vec3) void {
         zgl.Program.bind(&self.program);
         defer zgl.Program.unbind();
 
@@ -335,14 +324,13 @@ const Container = struct {
         gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture1"), 0);
         gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture2"), 1);
 
-        const seconds = @as(f32, @floatFromInt(timer.read())) / std.time.ns_per_s;
-        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix1"), std.math.cos(seconds));
-        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix2"), std.math.sin(0.1 * seconds));
+        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix1"), std.math.cos(time));
+        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Mix2"), std.math.sin(0.1 * time));
 
         const framebuffer_size = window.getFramebufferSize();
 
-        const model = za.Mat4.fromTranslate(position).rotate(seconds * 50.0, za.Vec3.new(0.5, 1.0, 0.0));
-        const view = za.Mat4.lookAt(camPos, camPos.add(camFront), camUp);
+        const model = za.Mat4.fromTranslate(position).rotate(time * 50.0, za.Vec3.new(0.5, 1.0, 0.0));
+        const view = camera.matrix();
         const projection = za.Mat4.perspective(45.0, @as(f32, @floatFromInt(framebuffer_size.width)) / @as(f32, @floatFromInt(framebuffer_size.height)), 0.1, 100.0);
 
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
@@ -350,6 +338,50 @@ const Container = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
         gl.DrawArrays(gl.TRIANGLES, 0, Container.vertices.len);
+    }
+};
+
+const Camera = struct {
+    position: za.Vec3,
+    front: za.Vec3,
+    up: za.Vec3,
+
+    yaw: f32,
+    pitch: f32,
+
+    fn init() Camera {
+        return Camera{
+            .position = za.Vec3.new(0.0, 0.0, 3.0),
+            .front = za.Vec3.new(0.0, 0.0, -1.0),
+            .up = za.Vec3.new(0.0, 1.0, 0.0),
+            .yaw = -90.0,
+            .pitch = 0.0,
+        };
+    }
+
+    fn move(self: *Camera, direction: za.Vec3) void {
+        self.position = self.position.add(direction);
+    }
+
+    fn turn(self: *Camera, yaw_: f32, pitch_: f32) void {
+        self.yaw += yaw_;
+        self.pitch += pitch_;
+
+        if (self.pitch > 89.0) {
+            self.pitch = 89.0;
+        } else if (self.pitch < -89.0) {
+            self.pitch = -89.0;
+        }
+
+        self.front = za.Vec3.new(
+            std.math.cos(std.math.degreesToRadians(self.yaw)) * std.math.cos(std.math.degreesToRadians(self.pitch)),
+            std.math.sin(std.math.degreesToRadians(self.pitch)),
+            std.math.sin(std.math.degreesToRadians(self.yaw)) * std.math.cos(std.math.degreesToRadians(self.pitch)),
+        ).norm();
+    }
+
+    fn matrix(self: Camera) za.Mat4 {
+        return za.Mat4.lookAt(self.position, self.position.add(self.front), self.up);
     }
 };
 
@@ -366,6 +398,10 @@ fn readFile(allocator: std.mem.Allocator, path: []const u8) ![:0]u8 {
 
 const State = struct {
     window: glfw.Window,
+    camera: Camera = Camera.init(),
+    mouse_first: bool = true,
+    mouse_last_x: f64 = undefined,
+    mouse_last_y: f64 = undefined,
 
     fn glfwErrorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void {
         glfw_log.err("{}: {s}\n", .{ error_code, description });
@@ -373,38 +409,35 @@ const State = struct {
 
     fn glfwOnKey(window: glfw.Window, key: glfw.Key, _: c_int, action: glfw.Action, _: glfw.Mods) void {
         if (key == glfw.Key.escape and action == glfw.Action.press) {
-            window.setShouldClose(true);
+            const mode = window.getInputModeCursor();
+
+            if (mode == .disabled) {
+                window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.normal);
+            } else {
+                window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
+            }
         }
     }
 
-    fn glfwOnCursorPos(_: glfw.Window, x: f64, y: f64) void {
-        if (first_mouse) {
-            last_x = x;
-            last_y = y;
-            first_mouse = false;
-            return;
+    fn glfwOnCursorPos(window: glfw.Window, x: f64, y: f64) void {
+        const ptr = window.getUserPointer(State);
+
+        if (ptr) |self| {
+            if (self.mouse_first) {
+                self.mouse_last_x = x;
+                self.mouse_last_y = y;
+                self.mouse_first = false;
+                return;
+            }
+
+            const sensitivity = 0.1;
+            const x_offset = @as(f32, @floatCast((x - self.mouse_last_x) * sensitivity));
+            const y_offset = @as(f32, @floatCast((self.mouse_last_y - y) * sensitivity)); // reversed since y-coordinates go from bottom to top
+            self.mouse_last_x = x;
+            self.mouse_last_y = y;
+
+            self.camera.turn(x_offset, y_offset);
         }
-
-        const sensitivity = 0.1;
-        const x_offset = (x - last_x) * sensitivity;
-        const y_offset = (last_y - y) * sensitivity; // reversed since y-coordinates go from bottom to top
-        last_x = x;
-        last_y = y;
-
-        yaw += @as(f32, @floatCast(x_offset));
-        pitch += @as(f32, @floatCast(y_offset));
-
-        if (pitch > 89.0) {
-            pitch = 89.0;
-        } else if (pitch < -89.0) {
-            pitch = -89.0;
-        }
-
-        camFront = za.Vec3.new(
-            std.math.cos(std.math.degreesToRadians(yaw)) * std.math.cos(std.math.degreesToRadians(pitch)),
-            std.math.sin(std.math.degreesToRadians(pitch)),
-            std.math.sin(std.math.degreesToRadians(yaw)) * std.math.cos(std.math.degreesToRadians(pitch)),
-        ).norm();
     }
 
     pub fn init() !State {
@@ -453,16 +486,12 @@ const State = struct {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         defer _ = gpa.deinit();
 
-        // var hexagon = try Hexagon.init(gpa.allocator());
-        // defer hexagon.deinit();
-        var timer = try std.time.Timer.start();
-
         var container = try Container.init(gpa.allocator());
         defer container.deinit();
 
+        self.window.setUserPointer(self);
         gl.ClearColor(0.1, 0.1, 0.1, 1);
         gl.Enable(gl.DEPTH_TEST);
-        // gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
         const positions = [_]za.Vec3{
             za.Vec3.new(0.0, 0.0, 0.0),
@@ -477,43 +506,34 @@ const State = struct {
             za.Vec3.new(-1.3, 1.0, -1.5),
         };
 
-        var before = glfw.getTime();
+        var before = @as(f32, @floatCast(glfw.getTime()));
 
         while (!self.window.shouldClose()) {
-            const now = glfw.getTime();
+            const now = @as(f32, @floatCast(glfw.getTime()));
             const delta = now - before;
             before = now;
 
             glfw.pollEvents();
 
-            const camera_speed = 2.5 * @as(f32, @floatCast(delta));
-            if (self.window.getKey(glfw.Key.w) == glfw.Action.press) {
-                camPos = camPos.add(camFront.scale(camera_speed));
-            }
-            if (self.window.getKey(glfw.Key.s) == glfw.Action.press) {
-                camPos = camPos.sub(camFront.scale(camera_speed));
-            }
-            if (self.window.getKey(glfw.Key.a) == glfw.Action.press) {
-                camPos = camPos.sub(camFront.cross(camUp).norm().scale(camera_speed));
-            }
-            if (self.window.getKey(glfw.Key.d) == glfw.Action.press) {
-                camPos = camPos.add(camFront.cross(camUp).norm().scale(camera_speed));
-            }
-            if (self.window.getKey(glfw.Key.space) == glfw.Action.press) {
-                camPos = camPos.add(camUp.scale(camera_speed));
-            }
-            if (self.window.getKey(glfw.Key.left_shift) == glfw.Action.press) {
-                camPos = camPos.sub(camUp.scale(camera_speed));
-            }
+            const camera_speed = 2.5 * delta;
+
+            const x = @as(i32, @intFromBool(self.window.getKey(glfw.Key.d) == glfw.Action.press)) - @as(i32, @intFromBool(self.window.getKey(glfw.Key.a) == glfw.Action.press));
+            const y = @as(i32, @intFromBool(self.window.getKey(glfw.Key.space) == glfw.Action.press)) - @as(i32, @intFromBool(self.window.getKey(glfw.Key.left_shift) == glfw.Action.press));
+            const z = @as(i32, @intFromBool(self.window.getKey(glfw.Key.s) == glfw.Action.press)) - @as(i32, @intFromBool(self.window.getKey(glfw.Key.w) == glfw.Action.press));
+
+            self.camera.move(za.Vec3.new(
+                @as(f32, @floatFromInt(x)) * camera_speed,
+                @as(f32, @floatFromInt(y)) * camera_speed,
+                @as(f32, @floatFromInt(z)) * camera_speed,
+            ));
 
             const framebuffer_size = self.window.getFramebufferSize();
             gl.Viewport(0, 0, @intCast(framebuffer_size.width), @intCast(framebuffer_size.height));
 
             gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            // hexagon.render(&self.window, &timer);
 
             for (positions) |position| {
-                container.render(&self.window, &timer, position);
+                container.render(self.camera, &self.window, now, position);
             }
 
             self.window.swapBuffers();
