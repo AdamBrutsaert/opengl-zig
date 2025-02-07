@@ -15,8 +15,8 @@
             .hash = "1220c015b29cc7d175cf20a23491251e65dbe58863d014755662d2f7c32c58a846b9",
         },
         .zalgebra = .{
-            .url = "git+https://github.com/AdamBrutsaert/zalgebra#7432845ddad16531023f6c519fb5f897f6972540",
-            .hash = "122042ed035f1936fc6ddc91896a18f25a173621b804e6730f65aad5645b850823d8",
+            .url = "git+https://github.com/AdamBrutsaert/zalgebra#5fbe034eb24f991fbd3bfe70fa454c77d32364f9",
+            .hash = "1220abe50197e29ba23a1d2876f189fa14bc7d0818094a9427f5ed593f9abe433890",
         },
     },
     .paths = .{

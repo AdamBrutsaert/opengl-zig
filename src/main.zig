@@ -10,6 +10,17 @@ const gl_log = std.log.scoped(.gl);
 /// Procedure table that will hold loaded OpenGL functions.
 var gl_procs: gl.ProcTable = undefined;
 
+var camPos = za.Vec3.new(0.0, 0.0, 3.0);
+var camFront = za.Vec3.new(0.0, 0.0, -1.0);
+const camUp = za.Vec3.new(0.0, 1.0, 0.0);
+
+var first_mouse = true;
+var last_x: f64 = undefined;
+var last_y: f64 = undefined;
+
+var yaw: f32 = -90.0;
+var pitch: f32 = 0.0;
+
 const Hexagon = struct {
     const Vertex = extern struct {
         const Position = [2]f32;
@@ -331,7 +342,7 @@ const Container = struct {
         const framebuffer_size = window.getFramebufferSize();
 
         const model = za.Mat4.fromTranslate(position).rotate(seconds * 50.0, za.Vec3.new(0.5, 1.0, 0.0));
-        const view = za.Mat4.fromTranslate(za.Vec3.new(0.0, 0.0, -3.0));
+        const view = za.Mat4.lookAt(camPos, camPos.add(camFront), camUp);
         const projection = za.Mat4.perspective(45.0, @as(f32, @floatFromInt(framebuffer_size.width)) / @as(f32, @floatFromInt(framebuffer_size.height)), 0.1, 100.0);
 
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
@@ -360,6 +371,42 @@ const State = struct {
         glfw_log.err("{}: {s}\n", .{ error_code, description });
     }
 
+    fn glfwOnKey(window: glfw.Window, key: glfw.Key, _: c_int, action: glfw.Action, _: glfw.Mods) void {
+        if (key == glfw.Key.escape and action == glfw.Action.press) {
+            window.setShouldClose(true);
+        }
+    }
+
+    fn glfwOnCursorPos(_: glfw.Window, x: f64, y: f64) void {
+        if (first_mouse) {
+            last_x = x;
+            last_y = y;
+            first_mouse = false;
+            return;
+        }
+
+        const sensitivity = 0.1;
+        const x_offset = (x - last_x) * sensitivity;
+        const y_offset = (last_y - y) * sensitivity; // reversed since y-coordinates go from bottom to top
+        last_x = x;
+        last_y = y;
+
+        yaw += @as(f32, @floatCast(x_offset));
+        pitch += @as(f32, @floatCast(y_offset));
+
+        if (pitch > 89.0) {
+            pitch = 89.0;
+        } else if (pitch < -89.0) {
+            pitch = -89.0;
+        }
+
+        camFront = za.Vec3.new(
+            std.math.cos(std.math.degreesToRadians(yaw)) * std.math.cos(std.math.degreesToRadians(pitch)),
+            std.math.sin(std.math.degreesToRadians(pitch)),
+            std.math.sin(std.math.degreesToRadians(yaw)) * std.math.cos(std.math.degreesToRadians(pitch)),
+        ).norm();
+    }
+
     pub fn init() !State {
         glfw.setErrorCallback(glfwErrorCallback);
 
@@ -378,6 +425,10 @@ const State = struct {
             return error.initWindowFailed;
         };
         errdefer window.destroy();
+
+        window.setKeyCallback(glfwOnKey);
+        window.setCursorPosCallback(glfwOnCursorPos);
+        window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
 
         glfw.makeContextCurrent(window);
         glfw.swapInterval(1);
@@ -426,8 +477,34 @@ const State = struct {
             za.Vec3.new(-1.3, 1.0, -1.5),
         };
 
+        var before = glfw.getTime();
+
         while (!self.window.shouldClose()) {
+            const now = glfw.getTime();
+            const delta = now - before;
+            before = now;
+
             glfw.pollEvents();
+
+            const camera_speed = 2.5 * @as(f32, @floatCast(delta));
+            if (self.window.getKey(glfw.Key.w) == glfw.Action.press) {
+                camPos = camPos.add(camFront.scale(camera_speed));
+            }
+            if (self.window.getKey(glfw.Key.s) == glfw.Action.press) {
+                camPos = camPos.sub(camFront.scale(camera_speed));
+            }
+            if (self.window.getKey(glfw.Key.a) == glfw.Action.press) {
+                camPos = camPos.sub(camFront.cross(camUp).norm().scale(camera_speed));
+            }
+            if (self.window.getKey(glfw.Key.d) == glfw.Action.press) {
+                camPos = camPos.add(camFront.cross(camUp).norm().scale(camera_speed));
+            }
+            if (self.window.getKey(glfw.Key.space) == glfw.Action.press) {
+                camPos = camPos.add(camUp.scale(camera_speed));
+            }
+            if (self.window.getKey(glfw.Key.left_shift) == glfw.Action.press) {
+                camPos = camPos.sub(camUp.scale(camera_speed));
+            }
 
             const framebuffer_size = self.window.getFramebufferSize();
             gl.Viewport(0, 0, @intCast(framebuffer_size.width), @intCast(framebuffer_size.height));
