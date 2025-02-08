@@ -13,29 +13,38 @@ pub const MyScene = struct {
     container_mesh: container.ContainerMesh = undefined,
     light_mesh: light.LightMesh = undefined,
 
-    container: container.Container = undefined,
-    light: light.Light = undefined,
+    containers: [10]container.Container = undefined,
+    pointLights: [4]light.PointLight = undefined,
+    directionalLight: light.DirectionalLight = undefined,
 
     escaped: bool = false,
     mouse_first: bool = true,
     mouse_last_x: f32 = undefined,
     mouse_last_y: f32 = undefined,
 
-    // const positions = [_]za.Vec3{
-    //     za.Vec3.new(0.0, 0.0, 0.0),
-    //     za.Vec3.new(2.0, 5.0, -15.0),
-    //     za.Vec3.new(-1.5, -2.2, -2.5),
-    //     za.Vec3.new(-3.8, -2.0, -12.3),
-    //     za.Vec3.new(2.4, -0.4, -3.5),
-    //     za.Vec3.new(-1.7, 3.0, -7.5),
-    //     za.Vec3.new(1.3, -2.0, -2.5),
-    //     za.Vec3.new(1.5, 2.0, -2.5),
-    //     za.Vec3.new(1.5, 0.2, -1.5),
-    //     za.Vec3.new(-1.3, 1.0, -1.5),
-    // };
+    const containerPositions = [10]za.Vec3{
+        za.Vec3.new(0.0, 0.0, 0.0),
+        za.Vec3.new(2.0, 5.0, -15.0),
+        za.Vec3.new(-1.5, -2.2, -2.5),
+        za.Vec3.new(-3.8, -2.0, -12.3),
+        za.Vec3.new(2.4, -0.4, -3.5),
+        za.Vec3.new(-1.7, 3.0, -7.5),
+        za.Vec3.new(1.3, -2.0, -2.5),
+        za.Vec3.new(1.5, 2.0, -2.5),
+        za.Vec3.new(1.5, 0.2, -1.5),
+        za.Vec3.new(-1.3, 1.0, -1.5),
+    };
+
+    const pointLightPositions = [4]za.Vec3{
+        za.Vec3.new(0.7, 0.2, 2.0),
+        za.Vec3.new(2.3, -3.3, -4.0),
+        za.Vec3.new(-4.0, 2.0, -12.0),
+        za.Vec3.new(0.0, 0.0, -3.0),
+    };
 
     pub fn onEnter(self: *MyScene, app: *eng.App) !void {
         app.window.setTitle("MyScene");
+        app.window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
 
         self.allocator = std.heap.GeneralPurposeAllocator(.{}){};
         const framebuffer_size = app.window.getFramebufferSize();
@@ -47,24 +56,37 @@ pub const MyScene = struct {
         self.light_mesh = try light.LightMesh.init(self.allocator.allocator());
 
         // Objects
-        self.container = container.Container{
-            .mesh = &self.container_mesh,
-            .position = za.Vec3.new(0, 0, 0),
-            .ambient = za.Vec3.new(1.0, 0.5, 0.31),
-            .diffuse = za.Vec3.new(1.0, 0.5, 0.31),
+        for (containerPositions, 0..) |position, i| {
+            self.containers[i] = container.Container{
+                .mesh = &self.container_mesh,
+                .position = position,
+                .ambient = za.Vec3.new(1.0, 0.5, 0.31),
+                .diffuse = za.Vec3.new(1.0, 0.5, 0.31),
+                .specular = za.Vec3.new(0.5, 0.5, 0.5),
+                .shininess = 32.0,
+            };
+        }
+
+        // Lights
+        self.directionalLight = light.DirectionalLight{
+            .ambient = za.Vec3.new(0.05, 0.05, 0.05),
+            .diffuse = za.Vec3.new(0.4, 0.4, 0.4),
             .specular = za.Vec3.new(0.5, 0.5, 0.5),
-            .shininess = 32.0,
+            .direction = za.Vec3.new(-0.2, -1.0, -0.3),
         };
 
-        self.light = light.Light{
-            .mesh = &self.light_mesh,
-            .position = za.Vec3.new(1.2, 1.0, 2.0),
-            .ambient = za.Vec3.new(0.2, 0.2, 0.2),
-            .diffuse = za.Vec3.new(0.5, 0.5, 0.5),
-            .specular = za.Vec3.new(1.0, 1.0, 1.0),
-        };
-
-        app.window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
+        for (pointLightPositions, 0..) |position, i| {
+            self.pointLights[i] = light.PointLight{
+                .mesh = &self.light_mesh,
+                .position = position,
+                .ambient = za.Vec3.new(0.05, 0.05, 0.05),
+                .diffuse = za.Vec3.new(0.8, 0.8, 0.8),
+                .specular = za.Vec3.new(1.0, 1.0, 1.0),
+                .constant = 1.0,
+                .linear = 0.09,
+                .quadratic = 0.032,
+            };
+        }
     }
 
     pub fn onExit(self: *MyScene, app: *eng.App) void {
@@ -116,11 +138,6 @@ pub const MyScene = struct {
             @as(f32, @floatFromInt(x)) * camera_speed,
             @as(f32, @floatFromInt(y)) * camera_speed,
         );
-
-        // const time: f32 = @floatCast(glfw.getTime());
-        // const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
-        // self.light.diffuse = light_color.scale(0.5);
-        // self.light.ambient = self.light.diffuse.scale(0.2);
     }
 
     pub fn update(self: *MyScene, app: *eng.App, deltaTime: f32) !void {
@@ -129,8 +146,13 @@ pub const MyScene = struct {
         const framebuffer_size = app.window.getFramebufferSize();
         self.camera.resize(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
 
-        self.light.render(self.camera);
-        self.container.render(self.camera, self.light);
+        for (self.containers) |c| {
+            c.render(self.camera, self.directionalLight, self.pointLights);
+        }
+
+        for (self.pointLights) |l| {
+            l.render(self.camera);
+        }
     }
 
     fn scene(self: *MyScene) eng.Scene {

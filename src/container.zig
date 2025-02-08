@@ -5,7 +5,7 @@ const za = @import("zalgebra");
 const zgl = @import("zgl.zig");
 const utils = @import("utils.zig");
 const Camera = @import("camera.zig").Camera;
-const Light = @import("light.zig").Light;
+const light = @import("light.zig");
 
 pub const ContainerMesh = struct {
     const Vertex = extern struct {
@@ -171,7 +171,7 @@ pub const Container = struct {
     specular: za.Vec3,
     shininess: f32,
 
-    pub fn render(self: *const Container, camera: Camera, light: Light) void {
+    pub fn render(self: *const Container, camera: Camera, directionalLight: light.DirectionalLight, pointLights: [4]light.PointLight) void {
         zgl.Program.bind(&self.mesh.program);
         defer zgl.Program.unbind();
 
@@ -192,11 +192,46 @@ pub const Container = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_View"), 1, gl.FALSE, view.getData());
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
-        const view_light_pos = view.mulByVec4(light.position.toVec4(1.0)).toVec3();
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.ambient"), light.ambient.x(), light.ambient.y(), light.ambient.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.diffuse"), light.diffuse.x(), light.diffuse.y(), light.diffuse.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.specular"), 1.0, 1.0, 1.0);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_DirectionalLight.direction"), directionalLight.direction.x(), directionalLight.direction.y(), directionalLight.direction.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_DirectionalLight.ambient"), directionalLight.ambient.x(), directionalLight.ambient.y(), directionalLight.ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_DirectionalLight.diffuse"), directionalLight.diffuse.x(), directionalLight.diffuse.y(), directionalLight.diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_DirectionalLight.specular"), directionalLight.specular.x(), directionalLight.specular.y(), directionalLight.specular.z());
+
+        var view_light_pos = view.mulByVec4(pointLights[0].position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].constant"), pointLights[0].constant);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].linear"), pointLights[0].linear);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].quadratic"), pointLights[0].quadratic);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].ambient"), pointLights[0].ambient.x(), pointLights[0].ambient.y(), pointLights[0].ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].diffuse"), pointLights[0].diffuse.x(), pointLights[0].diffuse.y(), pointLights[0].diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[0].specular"), pointLights[0].specular.x(), pointLights[0].specular.y(), pointLights[0].specular.z());
+
+        view_light_pos = view.mulByVec4(pointLights[1].position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].constant"), pointLights[1].constant);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].linear"), pointLights[1].linear);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].quadratic"), pointLights[1].quadratic);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].ambient"), pointLights[1].ambient.x(), pointLights[1].ambient.y(), pointLights[1].ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].diffuse"), pointLights[1].diffuse.x(), pointLights[1].diffuse.y(), pointLights[1].diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[1].specular"), pointLights[1].specular.x(), pointLights[1].specular.y(), pointLights[1].specular.z());
+
+        view_light_pos = view.mulByVec4(pointLights[2].position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].constant"), pointLights[2].constant);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].linear"), pointLights[2].linear);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].quadratic"), pointLights[2].quadratic);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].ambient"), pointLights[2].ambient.x(), pointLights[2].ambient.y(), pointLights[2].ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].diffuse"), pointLights[2].diffuse.x(), pointLights[2].diffuse.y(), pointLights[2].diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[2].specular"), pointLights[2].specular.x(), pointLights[2].specular.y(), pointLights[2].specular.z());
+
+        view_light_pos = view.mulByVec4(pointLights[3].position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].constant"), pointLights[3].constant);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].linear"), pointLights[3].linear);
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].quadratic"), pointLights[3].quadratic);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].ambient"), pointLights[3].ambient.x(), pointLights[3].ambient.y(), pointLights[3].ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].diffuse"), pointLights[3].diffuse.x(), pointLights[3].diffuse.y(), pointLights[3].diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_PointLights[3].specular"), pointLights[3].specular.x(), pointLights[3].specular.y(), pointLights[3].specular.z());
 
         gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Material.diffuse"), 0);
         gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Material.specular"), 1);

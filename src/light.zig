@@ -123,14 +123,17 @@ pub const LightMesh = struct {
     }
 };
 
-pub const Light = struct {
+pub const PointLight = struct {
     mesh: *LightMesh,
     position: za.Vec3,
+    constant: f32,
+    linear: f32,
+    quadratic: f32,
     ambient: za.Vec3,
     diffuse: za.Vec3,
     specular: za.Vec3,
 
-    pub fn render(self: *const Light, camera: Camera) void {
+    pub fn render(self: *const PointLight, camera: Camera) void {
         zgl.Program.bind(&self.mesh.program);
         defer zgl.Program.unbind();
 
@@ -149,4 +152,11 @@ pub const Light = struct {
 
         gl.DrawArrays(gl.TRIANGLES, 0, LightMesh.vertices.len);
     }
+};
+
+pub const DirectionalLight = struct {
+    direction: za.Vec3,
+    ambient: za.Vec3,
+    diffuse: za.Vec3,
+    specular: za.Vec3,
 };
