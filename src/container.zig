@@ -156,6 +156,8 @@ pub const Container = struct {
     }
 
     pub fn render(self: *const Container, camera: Camera, position: za.Vec3, light_position: za.Vec3) void {
+        const time: f32 = @floatCast(glfw.getTime());
+
         zgl.Program.bind(&self.program);
         defer zgl.Program.unbind();
 
@@ -174,11 +176,21 @@ pub const Container = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
         gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture"), 0);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ObjectColor"), 1.0, 0.5, 0.31);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightColor"), 1.0, 1.0, 1.0);
 
         const view_light_pos = view.mulByVec4(light_position.toVec4(1.0)).toVec3();
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightPos"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
+        const diffuse_color = light_color.scale(0.5);
+        const ambient_color = diffuse_color.scale(0.2);
+
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.ambient"), ambient_color.x(), ambient_color.y(), ambient_color.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.diffuse"), diffuse_color.x(), diffuse_color.y(), diffuse_color.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.specular"), 1.0, 1.0, 1.0);
+
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.ambient"), 1.0, 0.5, 0.31);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.diffuse"), 1.0, 0.5, 0.31);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.specular"), 0.5, 0.5, 0.5);
+        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Material.shininess"), 32.0);
 
         gl.DrawArrays(gl.TRIANGLES, 0, Container.vertices.len);
     }
