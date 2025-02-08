@@ -6,7 +6,7 @@ const zgl = @import("zgl.zig");
 const utils = @import("utils.zig");
 const Camera = @import("camera.zig").Camera;
 
-pub const Light = struct {
+pub const LightMesh = struct {
     const Vertex = extern struct {
         const Position = [3]f32;
         position: Position,
@@ -60,7 +60,7 @@ pub const Light = struct {
     vao: zgl.VertexArray,
     vbo: zgl.VertexBuffer,
 
-    pub fn init(allocator: std.mem.Allocator) !Light {
+    pub fn init(allocator: std.mem.Allocator) !LightMesh {
         const vertex_shader_source = try utils.readFile(allocator, "shaders/light.vert");
         const fragment_shader_source = try utils.readFile(allocator, "shaders/light.frag");
         defer allocator.free(vertex_shader_source);
@@ -91,8 +91,8 @@ pub const Light = struct {
 
                 gl.BufferData(
                     gl.ARRAY_BUFFER,
-                    @sizeOf(@TypeOf(Light.vertices)),
-                    &Light.vertices,
+                    @sizeOf(@TypeOf(LightMesh.vertices)),
+                    &LightMesh.vertices,
                     gl.STATIC_DRAW,
                 );
 
@@ -100,43 +100,51 @@ pub const Light = struct {
                 gl.EnableVertexAttribArray(position_attrib);
                 gl.VertexAttribPointer(
                     position_attrib,
-                    @typeInfo(Light.Vertex.Position).array.len,
+                    @typeInfo(LightMesh.Vertex.Position).array.len,
                     gl.FLOAT,
                     gl.FALSE,
-                    @sizeOf(Light.Vertex),
-                    @offsetOf(Light.Vertex, "position"),
+                    @sizeOf(LightMesh.Vertex),
+                    @offsetOf(LightMesh.Vertex, "position"),
                 );
             }
         }
 
-        return Light{
+        return LightMesh{
             .program = program,
             .vao = vao,
             .vbo = vbo,
         };
     }
 
-    pub fn deinit(self: *Light) void {
+    pub fn deinit(self: *LightMesh) void {
         self.program.deinit();
         self.vao.deinit();
         self.vbo.deinit();
     }
+};
 
-    pub fn render(self: *const Light, camera: Camera, position: za.Vec3) void {
-        zgl.Program.bind(&self.program);
+pub const Light = struct {
+    mesh: *LightMesh,
+    position: za.Vec3,
+    ambient: za.Vec3,
+    diffuse: za.Vec3,
+    specular: za.Vec3,
+
+    pub fn render(self: *const Light, camera: Camera) void {
+        zgl.Program.bind(&self.mesh.program);
         defer zgl.Program.unbind();
 
-        zgl.VertexArray.bind(&self.vao);
+        zgl.VertexArray.bind(&self.mesh.vao);
         defer zgl.VertexArray.unbind();
 
-        const model = za.Mat4.fromScale(za.Vec3.new(0.2, 0.2, 0.2)).translate(position);
+        const model = za.Mat4.fromScale(za.Vec3.new(0.2, 0.2, 0.2)).translate(self.position);
         const view = camera.viewMatrix();
         const projection = camera.projectionMatrix();
 
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_View"), 1, gl.FALSE, view.getData());
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Model"), 1, gl.FALSE, model.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_View"), 1, gl.FALSE, view.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
-        gl.DrawArrays(gl.TRIANGLES, 0, Light.vertices.len);
+        gl.DrawArrays(gl.TRIANGLES, 0, LightMesh.vertices.len);
     }
 };

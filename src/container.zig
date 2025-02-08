@@ -5,8 +5,9 @@ const za = @import("zalgebra");
 const zgl = @import("zgl.zig");
 const utils = @import("utils.zig");
 const Camera = @import("camera.zig").Camera;
+const Light = @import("light.zig").Light;
 
-pub const Container = struct {
+pub const ContainerMesh = struct {
     const Vertex = extern struct {
         const Position = [3]f32;
         const Tex = [2]f32;
@@ -66,7 +67,7 @@ pub const Container = struct {
     vao: zgl.VertexArray,
     vbo: zgl.VertexBuffer,
 
-    pub fn init(allocator: std.mem.Allocator) !Container {
+    pub fn init(allocator: std.mem.Allocator) !ContainerMesh {
         const vertex_shader_source = try utils.readFile(allocator, "shaders/container.vert");
         const fragment_shader_source = try utils.readFile(allocator, "shaders/container.frag");
         defer allocator.free(vertex_shader_source);
@@ -100,8 +101,8 @@ pub const Container = struct {
 
                 gl.BufferData(
                     gl.ARRAY_BUFFER,
-                    @sizeOf(@TypeOf(Container.vertices)),
-                    &Container.vertices,
+                    @sizeOf(@TypeOf(ContainerMesh.vertices)),
+                    &ContainerMesh.vertices,
                     gl.STATIC_DRAW,
                 );
 
@@ -109,38 +110,38 @@ pub const Container = struct {
                 gl.EnableVertexAttribArray(position_attrib);
                 gl.VertexAttribPointer(
                     position_attrib,
-                    @typeInfo(Container.Vertex.Position).array.len,
+                    @typeInfo(ContainerMesh.Vertex.Position).array.len,
                     gl.FLOAT,
                     gl.FALSE,
-                    @sizeOf(Container.Vertex),
-                    @offsetOf(Container.Vertex, "position"),
+                    @sizeOf(ContainerMesh.Vertex),
+                    @offsetOf(ContainerMesh.Vertex, "position"),
                 );
 
                 const tex_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Tex"));
                 gl.EnableVertexAttribArray(tex_attrib);
                 gl.VertexAttribPointer(
                     tex_attrib,
-                    @typeInfo(Container.Vertex.Tex).array.len,
+                    @typeInfo(ContainerMesh.Vertex.Tex).array.len,
                     gl.FLOAT,
                     gl.FALSE,
-                    @sizeOf(Container.Vertex),
-                    @offsetOf(Container.Vertex, "tex"),
+                    @sizeOf(ContainerMesh.Vertex),
+                    @offsetOf(ContainerMesh.Vertex, "tex"),
                 );
 
                 const normal_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Normal"));
                 gl.EnableVertexAttribArray(normal_attrib);
                 gl.VertexAttribPointer(
                     normal_attrib,
-                    @typeInfo(Container.Vertex.Normal).array.len,
+                    @typeInfo(ContainerMesh.Vertex.Normal).array.len,
                     gl.FLOAT,
                     gl.FALSE,
-                    @sizeOf(Container.Vertex),
-                    @offsetOf(Container.Vertex, "normal"),
+                    @sizeOf(ContainerMesh.Vertex),
+                    @offsetOf(ContainerMesh.Vertex, "normal"),
                 );
             }
         }
 
-        return Container{
+        return ContainerMesh{
             .program = program,
             .texture = texture,
             .vao = vao,
@@ -148,50 +149,53 @@ pub const Container = struct {
         };
     }
 
-    pub fn deinit(self: *Container) void {
+    pub fn deinit(self: *ContainerMesh) void {
         self.program.deinit();
         self.texture.deinit();
         self.vao.deinit();
         self.vbo.deinit();
     }
+};
 
-    pub fn render(self: *const Container, camera: Camera, position: za.Vec3, light_position: za.Vec3) void {
-        const time: f32 = @floatCast(glfw.getTime());
+pub const Container = struct {
+    mesh: *ContainerMesh,
+    position: za.Vec3,
+    ambient: za.Vec3,
+    diffuse: za.Vec3,
+    specular: za.Vec3,
+    shininess: f32,
 
-        zgl.Program.bind(&self.program);
+    pub fn render(self: *const Container, camera: Camera, light: Light) void {
+        zgl.Program.bind(&self.mesh.program);
         defer zgl.Program.unbind();
 
-        zgl.VertexArray.bind(&self.vao);
+        zgl.VertexArray.bind(&self.mesh.vao);
         defer zgl.VertexArray.unbind();
 
-        zgl.Texture2D.bind(&self.texture, 0);
+        zgl.Texture2D.bind(&self.mesh.texture, 0);
         defer zgl.Texture2D.unbind(0);
 
-        const model = za.Mat4.fromTranslate(position);
+        const model = za.Mat4.fromTranslate(self.position);
         const view = camera.viewMatrix();
         const projection = camera.projectionMatrix();
 
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_View"), 1, gl.FALSE, view.getData());
-        gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Model"), 1, gl.FALSE, model.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_View"), 1, gl.FALSE, view.getData());
+        gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
-        gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture"), 0);
+        gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Texture"), 0);
 
-        const view_light_pos = view.mulByVec4(light_position.toVec4(1.0)).toVec3();
-        const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
-        const diffuse_color = light_color.scale(0.5);
-        const ambient_color = diffuse_color.scale(0.2);
+        const view_light_pos = view.mulByVec4(light.position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.ambient"), light.ambient.x(), light.ambient.y(), light.ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.diffuse"), light.diffuse.x(), light.diffuse.y(), light.diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.specular"), 1.0, 1.0, 1.0);
 
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.ambient"), ambient_color.x(), ambient_color.y(), ambient_color.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.diffuse"), diffuse_color.x(), diffuse_color.y(), diffuse_color.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Light.specular"), 1.0, 1.0, 1.0);
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.ambient"), self.ambient.x(), self.ambient.y(), self.ambient.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.diffuse"), self.diffuse.x(), self.diffuse.y(), self.diffuse.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.specular"), self.specular.x(), self.specular.y(), self.specular.z());
+        gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.shininess"), self.shininess);
 
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.ambient"), 1.0, 0.5, 0.31);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.diffuse"), 1.0, 0.5, 0.31);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_Material.specular"), 0.5, 0.5, 0.5);
-        gl.Uniform1f(gl.GetUniformLocation(self.program.id, "u_Material.shininess"), 32.0);
-
-        gl.DrawArrays(gl.TRIANGLES, 0, Container.vertices.len);
+        gl.DrawArrays(gl.TRIANGLES, 0, ContainerMesh.vertices.len);
     }
 };

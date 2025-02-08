@@ -3,15 +3,18 @@ const za = @import("zalgebra");
 const glfw = @import("mach-glfw");
 const eng = @import("engine.zig");
 const Camera = @import("camera.zig").Camera;
-const Container = @import("container.zig").Container;
-const Light = @import("light.zig").Light;
+const container = @import("container.zig");
+const light = @import("light.zig");
 
 pub const MyScene = struct {
     allocator: std.heap.GeneralPurposeAllocator(.{}) = undefined,
     camera: Camera = undefined,
 
-    container: Container = undefined,
-    light: Light = undefined,
+    container_mesh: container.ContainerMesh = undefined,
+    light_mesh: light.LightMesh = undefined,
+
+    container: container.Container = undefined,
+    light: light.Light = undefined,
 
     escaped: bool = false,
     mouse_first: bool = true,
@@ -37,16 +40,37 @@ pub const MyScene = struct {
         self.allocator = std.heap.GeneralPurposeAllocator(.{}){};
         const framebuffer_size = app.window.getFramebufferSize();
         self.camera = Camera.init(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
-        self.container = try Container.init(self.allocator.allocator());
-        self.light = try Light.init(self.allocator.allocator());
+
+        // Meshes
+        self.container_mesh = try container.ContainerMesh.init(self.allocator.allocator());
+        errdefer self.container_mesh.deinit();
+        self.light_mesh = try light.LightMesh.init(self.allocator.allocator());
+
+        // Objects
+        self.container = container.Container{
+            .mesh = &self.container_mesh,
+            .position = za.Vec3.new(0, 0, 0),
+            .ambient = za.Vec3.new(1.0, 0.5, 0.31),
+            .diffuse = za.Vec3.new(1.0, 0.5, 0.31),
+            .specular = za.Vec3.new(0.5, 0.5, 0.5),
+            .shininess = 32.0,
+        };
+
+        self.light = light.Light{
+            .mesh = &self.light_mesh,
+            .position = za.Vec3.new(1.2, 1.0, 2.0),
+            .ambient = za.Vec3.new(0.2, 0.2, 0.2),
+            .diffuse = za.Vec3.new(0.5, 0.5, 0.5),
+            .specular = za.Vec3.new(1.0, 1.0, 1.0),
+        };
 
         app.window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
     }
 
     pub fn onExit(self: *MyScene, app: *eng.App) void {
         _ = app;
-        self.container.deinit();
-        self.light.deinit();
+        self.container_mesh.deinit();
+        self.light_mesh.deinit();
         _ = self.allocator.deinit();
     }
 
@@ -92,6 +116,11 @@ pub const MyScene = struct {
             @as(f32, @floatFromInt(x)) * camera_speed,
             @as(f32, @floatFromInt(y)) * camera_speed,
         );
+
+        const time: f32 = @floatCast(glfw.getTime());
+        const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
+        self.light.diffuse = light_color.scale(0.5);
+        self.light.ambient = self.light.diffuse.scale(0.2);
     }
 
     pub fn update(self: *MyScene, app: *eng.App, deltaTime: f32) !void {
@@ -100,8 +129,8 @@ pub const MyScene = struct {
         const framebuffer_size = app.window.getFramebufferSize();
         self.camera.resize(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
 
-        self.light.render(self.camera, za.Vec3.new(1.2, 1.0, 2.0));
-        self.container.render(self.camera, za.Vec3.new(0, 0, 0), za.Vec3.new(1.2, 1.0, 2.0));
+        self.light.render(self.camera);
+        self.container.render(self.camera, self.light);
     }
 
     fn scene(self: *MyScene) eng.Scene {
