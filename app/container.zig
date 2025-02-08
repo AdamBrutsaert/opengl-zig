@@ -69,8 +69,8 @@ pub const ContainerMesh = struct {
     vbo: zgl.VertexBuffer,
 
     pub fn init(allocator: std.mem.Allocator) !ContainerMesh {
-        const vertex_shader_source = try utils.readFile(allocator, "shaders/container.vert");
-        const fragment_shader_source = try utils.readFile(allocator, "shaders/container.frag");
+        const vertex_shader_source = try utils.readFile(allocator, "assets/shaders/container.vert");
+        const fragment_shader_source = try utils.readFile(allocator, "assets/shaders/container.frag");
         defer allocator.free(vertex_shader_source);
         defer allocator.free(fragment_shader_source);
 
@@ -83,10 +83,10 @@ pub const ContainerMesh = struct {
         var program = try zgl.Program.init(&[_]*const zgl.Shader{ &vertex_shader, &fragment_shader });
         errdefer program.deinit();
 
-        var diffuse_texture = try zgl.Texture2D.initRGBA(allocator, "assets/container2.png");
+        var diffuse_texture = try zgl.Texture2D.initRGBA(allocator, "assets/textures/container2.png");
         errdefer diffuse_texture.deinit();
 
-        var specular_texture = try zgl.Texture2D.initRGBA(allocator, "assets/container2_specular.png");
+        var specular_texture = try zgl.Texture2D.initRGBA(allocator, "assets/textures/container2_specular.png");
         errdefer specular_texture.deinit();
 
         var vao = try zgl.VertexArray.init();

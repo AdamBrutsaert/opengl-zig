@@ -61,8 +61,8 @@ pub const LightMesh = struct {
     vbo: zgl.VertexBuffer,
 
     pub fn init(allocator: std.mem.Allocator) !LightMesh {
-        const vertex_shader_source = try utils.readFile(allocator, "shaders/light.vert");
-        const fragment_shader_source = try utils.readFile(allocator, "shaders/light.frag");
+        const vertex_shader_source = try utils.readFile(allocator, "assets/shaders/light.vert");
+        const fragment_shader_source = try utils.readFile(allocator, "assets/shaders/light.frag");
         defer allocator.free(vertex_shader_source);
         defer allocator.free(fragment_shader_source);
 
