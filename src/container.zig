@@ -169,6 +169,7 @@ pub const Container = struct {
         gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ObjectColor"), 1.0, 0.5, 0.31);
         gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightColor"), 1.0, 1.0, 1.0);
         gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightPos"), light_position.x(), light_position.y(), light_position.z());
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ViewPos"), camera.position.x(), camera.position.y(), camera.position.z());
 
         const model = za.Mat4.fromTranslate(position);
         const view = camera.viewMatrix();
