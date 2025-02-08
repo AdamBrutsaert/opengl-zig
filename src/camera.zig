@@ -9,13 +9,18 @@ pub const Camera = struct {
     yaw: f32,
     pitch: f32,
 
-    pub fn init() Camera {
+    width: f32,
+    height: f32,
+
+    pub fn init(width: f32, height: f32) Camera {
         return Camera{
             .position = za.Vec3.new(0.0, 0.0, 3.0),
             .front = za.Vec3.new(0.0, 0.0, -1.0),
             .up = za.Vec3.new(0.0, 1.0, 0.0),
             .yaw = -90.0,
             .pitch = 0.0,
+            .width = width,
+            .height = height,
         };
     }
 
@@ -40,7 +45,16 @@ pub const Camera = struct {
         ).norm();
     }
 
-    pub fn matrix(self: Camera) za.Mat4 {
+    pub fn resize(self: *Camera, width: f32, height: f32) void {
+        self.width = width;
+        self.height = height;
+    }
+
+    pub fn viewMatrix(self: Camera) za.Mat4 {
         return za.Mat4.lookAt(self.position, self.position.add(self.front), self.up);
+    }
+
+    pub fn projectionMatrix(self: Camera) za.Mat4 {
+        return za.Mat4.perspective(70.0, self.width / self.height, 0.1, 100.0);
     }
 };

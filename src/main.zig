@@ -32,7 +32,8 @@ pub const MyScene = struct {
         app.window.setTitle("MyScene");
 
         self.allocator = std.heap.GeneralPurposeAllocator(.{}){};
-        self.camera = Camera.init();
+        const framebuffer_size = app.window.getFramebufferSize();
+        self.camera = Camera.init(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
         self.container = try Container.init(self.allocator.allocator());
 
         app.window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
@@ -91,8 +92,11 @@ pub const MyScene = struct {
     pub fn update(self: *MyScene, app: *eng.App, deltaTime: f32) !void {
         _ = deltaTime;
 
+        const framebuffer_size = app.window.getFramebufferSize();
+        self.camera.resize(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
+
         for (positions) |position| {
-            self.container.render(self.camera, &app.window, position);
+            self.container.render(self.camera, position);
         }
     }
 
@@ -109,8 +113,8 @@ pub fn main() !void {
 
     var application = try eng.App.init(gpa.allocator(), .{
         .title = "OpenGL in Zig!",
-        .width = 800,
-        .height = 600,
+        .width = 1280,
+        .height = 720,
         .scene = my_scene.scene(),
     });
     defer application.deinit(gpa.allocator());
