@@ -58,10 +58,14 @@ pub const App = struct {
     window: glfw.Window,
     scene: Scene,
 
+    fixedDeltaTime: f32,
+    fixedDeltaAccumulator: f32,
+
     pub const Config = struct {
         title: [*:0]const u8,
         width: u32,
         height: u32,
+        fixedDeltaTime: f32 = 1.0 / 60.0,
         scene: Scene,
     };
 
@@ -100,6 +104,8 @@ pub const App = struct {
         try initGL();
 
         app.scene = config.scene;
+        app.fixedDeltaTime = config.fixedDeltaTime;
+        app.fixedDeltaAccumulator = 0.0;
 
         app_count += 1;
         return app;
@@ -125,7 +131,14 @@ pub const App = struct {
             before = now;
 
             glfw.pollEvents();
+
+            self.fixedDeltaAccumulator += delta;
+            while (self.fixedDeltaAccumulator >= self.fixedDeltaTime) {
+                try self.scene.fixedUpdate(self, self.fixedDeltaTime);
+                self.fixedDeltaAccumulator -= self.fixedDeltaTime;
+            }
             try self.scene.update(self, delta);
+
             self.window.swapBuffers();
         }
     }

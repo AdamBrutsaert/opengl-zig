@@ -545,14 +545,20 @@ const std = @import("std");
 const eng = @import("engine.zig");
 
 pub const MyScene = struct {
-    pub fn update(self: *MyScene, app: *eng.App, delta: f32) !void {
+    pub fn fixedUpdate(self: *MyScene, app: *eng.App, fixedDeltaTime: f32) !void {
+        _ = self;
+        _ = app;
+        _ = fixedDeltaTime;
+    }
+
+    pub fn update(self: *MyScene, app: *eng.App, deltaTime: f32) !void {
         _ = self;
 
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         defer _ = gpa.deinit();
         var allocator = gpa.allocator();
 
-        const title = try std.fmt.allocPrintZ(allocator, "MyScene | delta = {d}\n", .{delta});
+        const title = try std.fmt.allocPrintZ(allocator, "MyScene | delta = {d}\n", .{deltaTime});
         defer allocator.free(title);
 
         app.window.setTitle(title);
