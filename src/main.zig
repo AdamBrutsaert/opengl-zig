@@ -117,10 +117,10 @@ pub const MyScene = struct {
             @as(f32, @floatFromInt(y)) * camera_speed,
         );
 
-        const time: f32 = @floatCast(glfw.getTime());
-        const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
-        self.light.diffuse = light_color.scale(0.5);
-        self.light.ambient = self.light.diffuse.scale(0.2);
+        // const time: f32 = @floatCast(glfw.getTime());
+        // const light_color = za.Vec3.new(std.math.sin(time * 2.0), std.math.sin(time * 0.7), std.math.sin(time * 1.3));
+        // self.light.diffuse = light_color.scale(0.5);
+        // self.light.ambient = self.light.diffuse.scale(0.2);
     }
 
     pub fn update(self: *MyScene, app: *eng.App, deltaTime: f32) !void {

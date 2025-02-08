@@ -63,7 +63,8 @@ pub const ContainerMesh = struct {
     };
 
     program: zgl.Program,
-    texture: zgl.Texture2D,
+    diffuse_texture: zgl.Texture2D,
+    specular_texture: zgl.Texture2D,
     vao: zgl.VertexArray,
     vbo: zgl.VertexBuffer,
 
@@ -82,8 +83,11 @@ pub const ContainerMesh = struct {
         var program = try zgl.Program.init(&[_]*const zgl.Shader{ &vertex_shader, &fragment_shader });
         errdefer program.deinit();
 
-        var texture = try zgl.Texture2D.initRGB(allocator, "assets/container.png");
-        errdefer texture.deinit();
+        var diffuse_texture = try zgl.Texture2D.initRGBA(allocator, "assets/container2.png");
+        errdefer diffuse_texture.deinit();
+
+        var specular_texture = try zgl.Texture2D.initRGBA(allocator, "assets/container2_specular.png");
+        errdefer specular_texture.deinit();
 
         var vao = try zgl.VertexArray.init();
         errdefer vao.deinit();
@@ -143,7 +147,8 @@ pub const ContainerMesh = struct {
 
         return ContainerMesh{
             .program = program,
-            .texture = texture,
+            .diffuse_texture = diffuse_texture,
+            .specular_texture = specular_texture,
             .vao = vao,
             .vbo = vbo,
         };
@@ -151,7 +156,8 @@ pub const ContainerMesh = struct {
 
     pub fn deinit(self: *ContainerMesh) void {
         self.program.deinit();
-        self.texture.deinit();
+        self.diffuse_texture.deinit();
+        self.specular_texture.deinit();
         self.vao.deinit();
         self.vbo.deinit();
     }
@@ -172,8 +178,11 @@ pub const Container = struct {
         zgl.VertexArray.bind(&self.mesh.vao);
         defer zgl.VertexArray.unbind();
 
-        zgl.Texture2D.bind(&self.mesh.texture, 0);
+        zgl.Texture2D.bind(&self.mesh.diffuse_texture, 0);
         defer zgl.Texture2D.unbind(0);
+
+        zgl.Texture2D.bind(&self.mesh.specular_texture, 1);
+        defer zgl.Texture2D.unbind(1);
 
         const model = za.Mat4.fromTranslate(self.position);
         const view = camera.viewMatrix();
@@ -183,17 +192,14 @@ pub const Container = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_View"), 1, gl.FALSE, view.getData());
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
-        gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Texture"), 0);
-
         const view_light_pos = view.mulByVec4(light.position.toVec4(1.0)).toVec3();
         gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.position"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
         gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.ambient"), light.ambient.x(), light.ambient.y(), light.ambient.z());
         gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.diffuse"), light.diffuse.x(), light.diffuse.y(), light.diffuse.z());
         gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Light.specular"), 1.0, 1.0, 1.0);
 
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.ambient"), self.ambient.x(), self.ambient.y(), self.ambient.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.diffuse"), self.diffuse.x(), self.diffuse.y(), self.diffuse.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.specular"), self.specular.x(), self.specular.y(), self.specular.z());
+        gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Material.diffuse"), 0);
+        gl.Uniform1i(gl.GetUniformLocation(self.mesh.program.id, "u_Material.specular"), 1);
         gl.Uniform1f(gl.GetUniformLocation(self.mesh.program.id, "u_Material.shininess"), self.shininess);
 
         gl.DrawArrays(gl.TRIANGLES, 0, ContainerMesh.vertices.len);
