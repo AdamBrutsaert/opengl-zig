@@ -165,12 +165,6 @@ pub const Container = struct {
         zgl.Texture2D.bind(&self.texture, 0);
         defer zgl.Texture2D.unbind(0);
 
-        gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture"), 0);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ObjectColor"), 1.0, 0.5, 0.31);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightColor"), 1.0, 1.0, 1.0);
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightPos"), light_position.x(), light_position.y(), light_position.z());
-        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ViewPos"), camera.position.x(), camera.position.y(), camera.position.z());
-
         const model = za.Mat4.fromTranslate(position);
         const view = camera.viewMatrix();
         const projection = camera.projectionMatrix();
@@ -178,6 +172,13 @@ pub const Container = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Model"), 1, gl.FALSE, model.getData());
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_View"), 1, gl.FALSE, view.getData());
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
+
+        gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture"), 0);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ObjectColor"), 1.0, 0.5, 0.31);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightColor"), 1.0, 1.0, 1.0);
+
+        const view_light_pos = view.mulByVec4(light_position.toVec4(1.0)).toVec3();
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightPos"), view_light_pos.x(), view_light_pos.y(), view_light_pos.z());
 
         gl.DrawArrays(gl.TRIANGLES, 0, Container.vertices.len);
     }
