@@ -145,6 +145,8 @@ pub const Light = struct {
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_View"), 1, gl.FALSE, view.getData());
         gl.UniformMatrix4fv(gl.GetUniformLocation(self.mesh.program.id, "u_Projection"), 1, gl.FALSE, projection.getData());
 
+        gl.Uniform3f(gl.GetUniformLocation(self.mesh.program.id, "u_Color"), self.diffuse.x(), self.diffuse.y(), self.diffuse.z());
+
         gl.DrawArrays(gl.TRIANGLES, 0, LightMesh.vertices.len);
     }
 };
