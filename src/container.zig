@@ -10,53 +10,55 @@ pub const Container = struct {
     const Vertex = extern struct {
         const Position = [3]f32;
         const Tex = [2]f32;
+        const Normal = [3]f32;
 
         position: Position,
         tex: Tex,
+        normal: Normal,
     };
 
     const vertices = [_]Vertex{
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, 0.0, -1.0 } },
 
-        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, 0.0, 1.0 } },
 
-        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ -1.0, 0.0, 0.0 } },
 
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 1.0, 0.0, 0.0 } },
 
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
+        .{ .position = .{ 0.5, -0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
+        .{ .position = .{ -0.5, -0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, -1.0, 0.0 } },
 
-        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
-        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 } },
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 } },
-        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 0.0, 0.0 } },
-        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, -0.5 }, .tex = .{ 1.0, 1.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
+        .{ .position = .{ 0.5, 0.5, 0.5 }, .tex = .{ 1.0, 0.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, 0.5 }, .tex = .{ 0.0, 0.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
+        .{ .position = .{ -0.5, 0.5, -0.5 }, .tex = .{ 0.0, 1.0 }, .normal = .{ 0.0, 1.0, 0.0 } },
     };
 
     program: zgl.Program,
@@ -124,6 +126,17 @@ pub const Container = struct {
                     @sizeOf(Container.Vertex),
                     @offsetOf(Container.Vertex, "tex"),
                 );
+
+                const normal_attrib: c_uint = @intCast(gl.GetAttribLocation(program.id, "a_Normal"));
+                gl.EnableVertexAttribArray(normal_attrib);
+                gl.VertexAttribPointer(
+                    normal_attrib,
+                    @typeInfo(Container.Vertex.Normal).array.len,
+                    gl.FLOAT,
+                    gl.FALSE,
+                    @sizeOf(Container.Vertex),
+                    @offsetOf(Container.Vertex, "normal"),
+                );
             }
         }
 
@@ -142,7 +155,7 @@ pub const Container = struct {
         self.vbo.deinit();
     }
 
-    pub fn render(self: *const Container, camera: Camera, position: za.Vec3) void {
+    pub fn render(self: *const Container, camera: Camera, position: za.Vec3, light_position: za.Vec3) void {
         zgl.Program.bind(&self.program);
         defer zgl.Program.unbind();
 
@@ -153,6 +166,9 @@ pub const Container = struct {
         defer zgl.Texture2D.unbind(0);
 
         gl.Uniform1i(gl.GetUniformLocation(self.program.id, "u_Texture"), 0);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_ObjectColor"), 1.0, 0.5, 0.31);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightColor"), 1.0, 1.0, 1.0);
+        gl.Uniform3f(gl.GetUniformLocation(self.program.id, "u_LightPos"), light_position.x(), light_position.y(), light_position.z());
 
         const model = za.Mat4.fromTranslate(position);
         const view = camera.viewMatrix();

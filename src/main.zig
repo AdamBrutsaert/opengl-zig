@@ -4,29 +4,32 @@ const glfw = @import("mach-glfw");
 const eng = @import("engine.zig");
 const Camera = @import("camera.zig").Camera;
 const Container = @import("container.zig").Container;
+const Light = @import("light.zig").Light;
 
 pub const MyScene = struct {
     allocator: std.heap.GeneralPurposeAllocator(.{}) = undefined,
     camera: Camera = undefined,
+
     container: Container = undefined,
+    light: Light = undefined,
 
     escaped: bool = false,
     mouse_first: bool = true,
     mouse_last_x: f32 = undefined,
     mouse_last_y: f32 = undefined,
 
-    const positions = [_]za.Vec3{
-        za.Vec3.new(0.0, 0.0, 0.0),
-        za.Vec3.new(2.0, 5.0, -15.0),
-        za.Vec3.new(-1.5, -2.2, -2.5),
-        za.Vec3.new(-3.8, -2.0, -12.3),
-        za.Vec3.new(2.4, -0.4, -3.5),
-        za.Vec3.new(-1.7, 3.0, -7.5),
-        za.Vec3.new(1.3, -2.0, -2.5),
-        za.Vec3.new(1.5, 2.0, -2.5),
-        za.Vec3.new(1.5, 0.2, -1.5),
-        za.Vec3.new(-1.3, 1.0, -1.5),
-    };
+    // const positions = [_]za.Vec3{
+    //     za.Vec3.new(0.0, 0.0, 0.0),
+    //     za.Vec3.new(2.0, 5.0, -15.0),
+    //     za.Vec3.new(-1.5, -2.2, -2.5),
+    //     za.Vec3.new(-3.8, -2.0, -12.3),
+    //     za.Vec3.new(2.4, -0.4, -3.5),
+    //     za.Vec3.new(-1.7, 3.0, -7.5),
+    //     za.Vec3.new(1.3, -2.0, -2.5),
+    //     za.Vec3.new(1.5, 2.0, -2.5),
+    //     za.Vec3.new(1.5, 0.2, -1.5),
+    //     za.Vec3.new(-1.3, 1.0, -1.5),
+    // };
 
     pub fn onEnter(self: *MyScene, app: *eng.App) !void {
         app.window.setTitle("MyScene");
@@ -35,6 +38,7 @@ pub const MyScene = struct {
         const framebuffer_size = app.window.getFramebufferSize();
         self.camera = Camera.init(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
         self.container = try Container.init(self.allocator.allocator());
+        self.light = try Light.init(self.allocator.allocator());
 
         app.window.setInputMode(glfw.Window.InputMode.cursor, glfw.Window.InputModeCursor.disabled);
     }
@@ -42,6 +46,7 @@ pub const MyScene = struct {
     pub fn onExit(self: *MyScene, app: *eng.App) void {
         _ = app;
         self.container.deinit();
+        self.light.deinit();
         _ = self.allocator.deinit();
     }
 
@@ -95,9 +100,8 @@ pub const MyScene = struct {
         const framebuffer_size = app.window.getFramebufferSize();
         self.camera.resize(@floatFromInt(framebuffer_size.width), @floatFromInt(framebuffer_size.height));
 
-        for (positions) |position| {
-            self.container.render(self.camera, position);
-        }
+        self.light.render(self.camera, za.Vec3.new(1.2, 1.0, 2.0));
+        self.container.render(self.camera, za.Vec3.new(0, 0, 0), za.Vec3.new(1.2, 1.0, 2.0));
     }
 
     fn scene(self: *MyScene) eng.Scene {
