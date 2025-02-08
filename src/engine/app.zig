@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("mach-glfw");
 const gl = @import("gl");
+const Scene = @import("scene.zig").Scene;
 
 const app_log = std.log.scoped(.glfw);
 
@@ -52,35 +53,6 @@ fn deinitGL() void {
     gl.makeProcTableCurrent(null);
     gl_initialized = false;
 }
-
-pub const Scene = struct {
-    ptr: *anyopaque,
-    updateFn: *const fn (ptr: *anyopaque, delta: f32) anyerror!void,
-
-    pub fn init(ptr: anytype) Scene {
-        const T = @TypeOf(ptr);
-        const ptr_info = @typeInfo(T);
-
-        if (ptr_info != .pointer) @compileError("ptr must be a pointer");
-        if (ptr_info.pointer.size != .one) @compileError("ptr must be a pointer to a single value");
-
-        const gen = struct {
-            pub fn update(pointer: *anyopaque, delta: f32) anyerror!void {
-                const self: T = @ptrCast(@alignCast(pointer));
-                return @call(.auto, ptr_info.pointer.child.update, .{ self, delta });
-            }
-        };
-
-        return .{
-            .ptr = ptr,
-            .updateFn = gen.update,
-        };
-    }
-
-    pub fn update(self: *Scene, delta: f32) !void {
-        return self.updateFn(self.ptr, delta);
-    }
-};
 
 pub const App = struct {
     window: glfw.Window,
@@ -145,9 +117,15 @@ pub const App = struct {
     }
 
     pub fn run(self: *App) !void {
+        var before = @as(f32, @floatCast(glfw.getTime()));
+
         while (!self.window.shouldClose()) {
+            const now = @as(f32, @floatCast(glfw.getTime()));
+            const delta = now - before;
+            before = now;
+
             glfw.pollEvents();
-            try self.scene.update(0);
+            try self.scene.update(self, delta);
             self.window.swapBuffers();
         }
     }

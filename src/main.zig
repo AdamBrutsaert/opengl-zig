@@ -542,16 +542,24 @@
 // };
 
 const std = @import("std");
-const app = @import("app.zig");
+const eng = @import("engine.zig");
 
 pub const MyScene = struct {
-    pub fn update(self: *MyScene, delta: f32) void {
+    pub fn update(self: *MyScene, app: *eng.App, delta: f32) !void {
         _ = self;
-        std.debug.print("Scene update with delta = {d}\n", .{delta});
+
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        defer _ = gpa.deinit();
+        var allocator = gpa.allocator();
+
+        const title = try std.fmt.allocPrintZ(allocator, "MyScene | delta = {d}\n", .{delta});
+        defer allocator.free(title);
+
+        app.window.setTitle(title);
     }
 
-    fn scene(self: *MyScene) app.Scene {
-        return app.Scene.init(self);
+    fn scene(self: *MyScene) eng.Scene {
+        return eng.Scene.init(self);
     }
 };
 
@@ -561,7 +569,7 @@ pub fn main() !void {
 
     var my_scene = MyScene{};
 
-    var application = try app.App.init(gpa.allocator(), .{
+    var application = try eng.App.init(gpa.allocator(), .{
         .title = "OpenGL in Zig!",
         .width = 800,
         .height = 600,
