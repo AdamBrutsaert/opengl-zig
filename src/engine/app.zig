@@ -125,6 +125,8 @@ pub const App = struct {
     pub fn run(self: *App) !void {
         var before = @as(f32, @floatCast(glfw.getTime()));
 
+        try self.scene.onEnter(self);
+
         while (!self.window.shouldClose()) {
             const now = @as(f32, @floatCast(glfw.getTime()));
             const delta = now - before;
