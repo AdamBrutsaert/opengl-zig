@@ -1,10 +1,11 @@
 const std = @import("std");
 const glfw = @import("mach-glfw");
 const gl = @import("gl");
+
 const Scene = @import("scene.zig").Scene;
 const Event = @import("event.zig").Event;
 
-const app_log = std.log.scoped(.glfw);
+const app_log = std.log.scoped(.app);
 
 var glfw_initialized: bool = false;
 var gl_initialized: bool = false;
