@@ -5,6 +5,7 @@ pub const Scene = struct {
     ptr: *anyopaque,
 
     onEnterFn: *const fn (ptr: *anyopaque, app: *App) anyerror!void,
+    onExitFn: *const fn (ptr: *anyopaque, app: *App) anyerror!void,
     onEventFn: *const fn (ptr: *anyopaque, app: *App, event: Event) anyerror!void,
     fixedUpdateFn: *const fn (ptr: *anyopaque, app: *App, fixedDeltaTime: f32) anyerror!void,
     updateFn: *const fn (ptr: *anyopaque, app: *App, deltaTime: f32) anyerror!void,
@@ -20,6 +21,11 @@ pub const Scene = struct {
             pub fn onEnter(pointer: *anyopaque, app: *App) anyerror!void {
                 const self: T = @ptrCast(@alignCast(pointer));
                 return @call(.auto, ptr_info.pointer.child.onEnter, .{ self, app });
+            }
+
+            pub fn onExit(pointer: *anyopaque, app: *App) anyerror!void {
+                const self: T = @ptrCast(@alignCast(pointer));
+                return @call(.auto, ptr_info.pointer.child.onExit, .{ self, app });
             }
 
             pub fn onEvent(pointer: *anyopaque, app: *App, event: Event) anyerror!void {
@@ -41,6 +47,7 @@ pub const Scene = struct {
         return .{
             .ptr = ptr,
             .onEnterFn = gen.onEnter,
+            .onExitFn = gen.onExit,
             .onEventFn = gen.onEvent,
             .fixedUpdateFn = gen.fixedUpdate,
             .updateFn = gen.update,
@@ -49,6 +56,10 @@ pub const Scene = struct {
 
     pub fn onEnter(self: *Scene, app: *App) !void {
         return self.onEnterFn(self.ptr, app);
+    }
+
+    pub fn onExit(self: *Scene, app: *App) !void {
+        return self.onExitFn(self.ptr, app);
     }
 
     pub fn onEvent(self: *Scene, app: *App, event: Event) !void {

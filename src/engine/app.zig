@@ -84,6 +84,16 @@ pub const App = struct {
         }
     }
 
+    fn key_callback(window: glfw.Window, key: glfw.Key, scancode: i32, action: glfw.Action, mods: glfw.Mods) void {
+        const ptr = window.getUserPointer(App);
+
+        if (ptr) |app| {
+            app.scene.onEvent(app, .{
+                .key = .{ .key = key, .scancode = scancode, .action = action, .mods = mods },
+            }) catch {};
+        }
+    }
+
     pub fn init(allocator: std.mem.Allocator, config: Config) !*App {
         try initGLFW();
         errdefer deinitGLFW();
@@ -109,9 +119,11 @@ pub const App = struct {
         app.window.setUserPointer(app);
         app.window.setFramebufferSizeCallback(framebuffer_size_callback);
         app.window.setCursorPosCallback(cursor_pos_callback);
+        app.window.setKeyCallback(key_callback);
 
         // Initialize OpenGL now that we have a context
         try initGL();
+        gl.Enable(gl.DEPTH_TEST);
 
         app.scene = config.scene;
         app.fixedDeltaTime = config.fixedDeltaTime;
@@ -160,5 +172,7 @@ pub const App = struct {
 
             self.window.swapBuffers();
         }
+
+        try self.scene.onExit(self);
     }
 };
