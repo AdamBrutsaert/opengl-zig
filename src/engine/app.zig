@@ -2,6 +2,7 @@ const std = @import("std");
 const glfw = @import("mach-glfw");
 const gl = @import("gl");
 const Scene = @import("scene.zig").Scene;
+const Event = @import("event.zig").Event;
 
 const app_log = std.log.scoped(.glfw);
 
@@ -57,9 +58,7 @@ fn deinitGL() void {
 pub const App = struct {
     window: glfw.Window,
     scene: Scene,
-
     fixedDeltaTime: f32,
-    fixedDeltaAccumulator: f32,
 
     pub const Config = struct {
         title: [*:0]const u8,
@@ -73,6 +72,16 @@ pub const App = struct {
         _ = window;
 
         gl.Viewport(0, 0, @intCast(width), @intCast(height));
+    }
+
+    fn cursor_pos_callback(window: glfw.Window, x: f64, y: f64) void {
+        const ptr = window.getUserPointer(App);
+
+        if (ptr) |app| {
+            app.scene.onEvent(app, .{
+                .mouseMove = .{ .x = @as(f32, @floatCast(x)), .y = @as(f32, @floatCast(y)) },
+            }) catch {};
+        }
     }
 
     pub fn init(allocator: std.mem.Allocator, config: Config) !*App {
@@ -99,13 +108,13 @@ pub const App = struct {
 
         app.window.setUserPointer(app);
         app.window.setFramebufferSizeCallback(framebuffer_size_callback);
+        app.window.setCursorPosCallback(cursor_pos_callback);
 
         // Initialize OpenGL now that we have a context
         try initGL();
 
         app.scene = config.scene;
         app.fixedDeltaTime = config.fixedDeltaTime;
-        app.fixedDeltaAccumulator = 0.0;
 
         app_count += 1;
         return app;
@@ -124,6 +133,7 @@ pub const App = struct {
 
     pub fn run(self: *App) !void {
         var before = @as(f32, @floatCast(glfw.getTime()));
+        var fixedDeltaAccumulator: f32 = 0.0;
 
         try self.scene.onEnter(self);
 
@@ -134,10 +144,17 @@ pub const App = struct {
 
             glfw.pollEvents();
 
-            self.fixedDeltaAccumulator += delta;
-            while (self.fixedDeltaAccumulator >= self.fixedDeltaTime) {
+            if (current_app != self) {
+                glfw.makeContextCurrent(self.window);
+                current_app = self;
+            }
+
+            gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            fixedDeltaAccumulator += delta;
+            while (fixedDeltaAccumulator >= self.fixedDeltaTime) {
                 try self.scene.fixedUpdate(self, self.fixedDeltaTime);
-                self.fixedDeltaAccumulator -= self.fixedDeltaTime;
+                fixedDeltaAccumulator -= self.fixedDeltaTime;
             }
             try self.scene.update(self, delta);
 

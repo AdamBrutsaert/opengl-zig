@@ -550,6 +550,15 @@ pub const MyScene = struct {
         app.window.setTitle("MyScene");
     }
 
+    pub fn onEvent(self: *MyScene, app: *eng.App, event: eng.Event) !void {
+        _ = self;
+        _ = app;
+
+        switch (event) {
+            .mouseMove => |pos| std.debug.print("Mouse moved: ({d}, {d})\n", .{ pos.x, pos.y }),
+        }
+    }
+
     pub fn fixedUpdate(self: *MyScene, app: *eng.App, fixedDeltaTime: f32) !void {
         _ = self;
         _ = app;
