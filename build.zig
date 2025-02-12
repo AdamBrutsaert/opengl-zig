@@ -27,6 +27,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const ecs_dep = b.dependency("ecs", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     // 1. Create the engine module
     const engine_module = b.addModule("engine", .{
         .root_source_file = b.path("engine/root.zig"),
@@ -49,6 +54,7 @@ pub fn build(b: *std.Build) void {
     app_module.addImport("zigimg", zigimg_dep.module("zigimg"));
     app_module.addImport("zalgebra", zalgebra_dep.module("zalgebra"));
     app_module.addImport("engine", engine_module);
+    app_module.addImport("ecs", ecs_dep.module("ecs"));
 
     // 3. Create the executable
     const exe = b.addExecutable(.{

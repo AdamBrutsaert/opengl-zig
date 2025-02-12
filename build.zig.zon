@@ -18,6 +18,10 @@
             .url = "git+https://github.com/AdamBrutsaert/zalgebra#5fbe034eb24f991fbd3bfe70fa454c77d32364f9",
             .hash = "1220abe50197e29ba23a1d2876f189fa14bc7d0818094a9427f5ed593f9abe433890",
         },
+        .ecs = .{
+            .url = "git+https://github.com/AdamBrutsaert/zig-ecs#ac4bfc256ac8669e9405c9b39b512553d31233e8",
+            .hash = "12205fbd3d97c3338a949f3a2902c36f33c1da72c3c5aaeae5b04ea8b134dc87f2b8",
+        },
     },
     .paths = .{
         "build.zig",
